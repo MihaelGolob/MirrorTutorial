@@ -5,52 +5,22 @@ using UnityEngine;
 using UnityEngine.XR;
 
 public class PlayerController : NetworkBehaviour {
-    // variables synced between server and client
-    [SyncVar(hook = nameof(OnHelloCountChange))] private int helloCount = 0;
-    
-    private void HandleMovement() {
-        // Check if the script is running on the local player (we cant control other players)
-        if (isLocalPlayer) {
-            float moveHorizontal = Input.GetAxis("Horizontal") * 0.1f;
-            float moveVertical = Input.GetAxis("Vertical") * 0.1f;
+    [SerializeField] private Vector3 _movement = new Vector3();
 
-            Vector3 movement = new Vector3(moveHorizontal, moveVertical, 0f);
-            transform.position += movement;
-        }
-    }
-
+    [Client]
     private void Update() {
-        HandleMovement();
-
-        if (isLocalPlayer && Input.GetKeyDown(KeyCode.X)) {
-            Debug.Log("Sending Hello message to server");
-            Hello();
+        if (isLocalPlayer && Input.GetKeyDown(KeyCode.Space)) {
+            Move_cmd();
         }
-    }
-
-    public override void OnStartServer() {
-        base.OnStartServer();
-        Debug.Log("Player has been spawned on the server");
     }
 
     [Command]
-    private void Hello() {
-        Debug.Log("Received Hello from CLIENT");
-        helloCount++;
-        ReplyHello();
-    }
-
-    [TargetRpc]
-    private void ReplyHello() {
-        Debug.Log("Received Hello from SERVER");
+    private void Move_cmd() {
+        MoveClient();
     }
 
     [ClientRpc]
-    private void TooHigh() {
-        Debug.Log("Player too high!");
-    }
-    
-    void OnHelloCountChange(int oldc, int newc) {
-        Debug.Log($"We had {oldc} hellos, now we have {newc} hellos");
-    }
+    private void MoveClient() {
+        transform.Translate(_movement);
+    } 
 }
